@@ -44,7 +44,7 @@ const postUser = (req, res) => {
 
 const patchUser = (req, res, data) => {
   User.findByIdAndUpdate(req.user._id, data, { new: true, runValidators: true })
-    .orFail(new mongoose.Error.DocumentNotFoundError())
+    .orFail()
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
