@@ -32,7 +32,7 @@ const postUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
         res.status(codesError.INCORRECT_DATA).send({ message: 'Переданы некорректные данные при создании пользователя' });
@@ -44,6 +44,7 @@ const postUser = (req, res) => {
 
 const patchUser = (req, res, data) => {
   User.findByIdAndUpdate(req.user._id, data, { new: true, runValidators: true })
+    .orFail(new mongoose.Error.DocumentNotFoundError())
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {

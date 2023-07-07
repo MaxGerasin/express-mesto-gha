@@ -14,7 +14,7 @@ const postCard = (req, res) => {
   const { name, link } = req.body;
 
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
         res.status(codesError.INCORRECT_DATA).send({
