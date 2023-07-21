@@ -1,58 +1,81 @@
 const mongoose = require('mongoose');
-const { codesError } = require('../const');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const User = require('../models/user');
+const IncorrectError = require('../errors/incorrectError');
+const NotFoundDataError = require('../errors/notFoundDataError');
+const UnauthorizedError = require('../errors/unauthorizedError');
+const ConflictError = require('../errors/conflictError');
 
-const getUsers = (req, res) => {
+const getUsers = (req, res, next) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch(() => {
-      res.status(codesError.DEFAULT).send({ message: 'На сервере произошла ошибка' });
-    });
+    .then((users) => res.send({ users }))
+    .catch(next);
 };
 
-const getUser = (req, res) => {
+const getUser = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (user) {
-        res.send({ data: user });
+        res.send({ user });
       } else {
-        res.status(codesError.NOT_FOUND_DATA).send({ message: 'Пользователь по указанному id не найден' });
+        throw new NotFoundDataError('Пользователь по указанному id не найден');
       }
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        res.status(codesError.INCORRECT_DATA).send({ message: 'Переданы некорректные данные при поиске пользователя' });
+        next(new IncorrectError('Переданы некорректные данные при поиске пользователя'));
       } else {
-        res.status(codesError.DEFAULT).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
 };
 
-const postUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+const getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (user) {
+        res.send({ data: user });
+      } else {
+        throw new NotFoundDataError('Пользователь по указанному id не найден');
+      }
+    })
+    .catch(next);
+};
 
-  User.create({ name, about, avatar })
-    .then((user) => res.status(201).send({ data: user }))
+const postUser = (req, res, next) => {
+  const { name, about, avatar, email, password } = req.body;
+
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => User.create({ name, about, avatar, email, password: hash }))
+    .then((user) => {
+      const { ...userCurr } = user.toObject();
+      delete userCurr.password;
+      res.status(201).send({ data: userCurr });
+    })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        res.status(codesError.INCORRECT_DATA).send({ message: 'Переданы некорректные данные при создании пользователя' });
+        next(new IncorrectError('Переданы некорректные данные при создании пользователя'));
+      } else if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
       } else {
-        res.status(codesError.DEFAULT).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
 };
 
-const patchUser = (req, res, data) => {
+const patchUser = (req, res, data, next) => {
   User.findByIdAndUpdate(req.user._id, data, { new: true, runValidators: true })
     .orFail()
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({ user }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        res.status(codesError.INCORRECT_DATA).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+        next(new IncorrectError('Переданы некорректные данные при обновлении профиля'));
       } else if (err instanceof mongoose.Error.DocumentNotFoundError) {
-        res.status(codesError.NOT_FOUND_DATA).send({ message: 'Пользователь с указанным id не найден' });
+        next(new NotFoundDataError('Пользователь с указанным id не найден'));
       } else {
-        res.status(codesError.DEFAULT).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
 };
@@ -69,10 +92,28 @@ const patchUserAvatar = (req, res) => {
   patchUser(req, res, { avatar });
 };
 
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      res.send({
+        token: jwt.sign({ _id: user._id }, 'some-secret-key', {
+          expiresIn: '7d',
+        }),
+      });
+    })
+    .catch((err) => {
+      next(new UnauthorizedError(err.message));
+    });
+};
+
 module.exports = {
   getUsers,
   getUser,
+  getCurrentUser,
   postUser,
   patchUserProfile,
   patchUserAvatar,
+  login,
 };
