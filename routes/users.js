@@ -18,26 +18,26 @@ router.get(
       userId: Joi.string().required().length(24).hex(),
     }),
   }),
-  getUser
+  getUser,
 );
 router.patch(
   '/users/me',
   celebrate({
     body: Joi.object().keys({
-      name: Joi.string().min(2).max(30),
-      about: Joi.string().min(2).max(30),
+      name: Joi.string().required().min(2).max(30),
+      about: Joi.string().required().min(2).max(30),
     }),
   }),
-  patchUserProfile
+  patchUserProfile,
 );
 router.patch(
   '/users/me/avatar',
   celebrate({
     body: Joi.object().keys({
-      avatar: Joi.string().regex(LINK_REG_EXP),
+      avatar: Joi.string().required().regex(LINK_REG_EXP),
     }),
   }),
-  patchUserAvatar
+  patchUserAvatar,
 );
 
 module.exports = router;

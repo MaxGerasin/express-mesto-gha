@@ -17,11 +17,7 @@ const postCard = (req, res, next) => {
     .then((card) => res.status(201).send({ data: card }))
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        next(
-          new IncorrectError(
-            'Переданы некорректные данные при создании карточки'
-          )
-        );
+        next(new IncorrectError('Переданы некорректные данные при создании карточки'));
       } else {
         next(err);
       }
@@ -56,11 +52,7 @@ const deleteCard = (req, res, next) => {
 };
 
 const putLikeCard = (req, res, next) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $addToSet: { likes: req.user._id } },
-    { new: true }
-  )
+  Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (card) {
         res.send({ data: card });
@@ -70,11 +62,7 @@ const putLikeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
-        next(
-          new IncorrectError(
-            'Переданы некорректные данные для установки лайка'
-          )
-        );
+        next(new IncorrectError('Переданы некорректные данные для установки лайка'));
       } else {
         next(err);
       }
@@ -82,11 +70,7 @@ const putLikeCard = (req, res, next) => {
 };
 
 const deleteLikeCard = (req, res, next) => {
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true }
-  )
+  Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (card) {
         res.send({ data: card });
@@ -97,7 +81,7 @@ const deleteLikeCard = (req, res, next) => {
     .catch((err) => {
       if (err instanceof mongoose.Error.CastError) {
         next(
-          new IncorrectError('Переданы некорректные данные для удаления лайка')
+          new IncorrectError('Переданы некорректные данные для удаления лайка'),
         );
       } else {
         next(err);

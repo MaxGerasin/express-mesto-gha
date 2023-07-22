@@ -11,7 +11,7 @@ router.post(
       password: Joi.string().required(),
     }),
   }),
-  login
+  login,
 );
 router.post(
   '/signup',
@@ -24,7 +24,7 @@ router.post(
       password: Joi.string().required(),
     }),
   }),
-  postUser
+  postUser,
 );
 
 module.exports = router;
