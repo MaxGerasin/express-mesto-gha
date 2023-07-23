@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { LINK_REG_EXP } = require('../const');
 
 const userCard = new mongoose.Schema({
   name: {
@@ -10,6 +11,9 @@ const userCard = new mongoose.Schema({
   link: {
     type: String,
     required: true,
+    validate: {
+      validator: (v) => LINK_REG_EXP.test(v),
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
