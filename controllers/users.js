@@ -112,7 +112,7 @@ const login = (req, res, next) => {
       });
     })
     .catch((err) => {
-      next(new UnauthorizedError(err.message));
+      next(err);
     });
 };
 
