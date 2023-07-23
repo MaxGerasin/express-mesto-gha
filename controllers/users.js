@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const IncorrectError = require('../errors/incorrectError');
 const NotFoundDataError = require('../errors/notFoundDataError');
-const UnauthorizedError = require('../errors/unauthorizedError');
 const ConflictError = require('../errors/conflictError');
 
 const getUsers = (req, res, next) => {
